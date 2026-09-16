@@ -124,10 +124,16 @@ export class UIManager {
       });
     }
 
-    // Toggle Admin-only menu items
+    // Toggle Admin-only menu items (Superadmin & Admin)
     const isAdmin = this.auth.isAdmin();
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = isAdmin ? "inline-flex" : "none";
+    });
+
+    // Toggle Docente-accessible menu items (Docentes, Admins, Superadmins)
+    const isDocente = this.auth.isDocente();
+    document.querySelectorAll(".docente-only").forEach(el => {
+      el.style.display = isDocente ? "inline-flex" : "none";
     });
   }
 
@@ -135,6 +141,14 @@ export class UIManager {
     // Guard check for unauthenticated users trying to access app views
     if (!this.auth.isLoggedIn() && viewId !== "auth-view") {
       viewId = "auth-view";
+    }
+
+    // Role-based route guards
+    if (viewId === "users-view" || viewId === "db-view" || viewId === "logs-view") {
+      if (!this.auth.isAdmin()) viewId = "cases-view";
+    }
+    if (viewId === "reports-view") {
+      if (!this.auth.canViewReports()) viewId = "cases-view";
     }
 
     this.activeView = viewId;
@@ -293,7 +307,7 @@ export class UIManager {
     if (!container) return;
 
     let allCases = await this.db.getCases();
-    const isAdmin = this.auth.isAdmin();
+    const canManageCases = this.auth.canManageCases();
 
     container.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -307,7 +321,7 @@ export class UIManager {
           </div>
         </div>
 
-        ${isAdmin ? `
+        ${canManageCases ? `
           <button id="add-case-btn" class="btn btn-primary">
             <i class="fas fa-plus-circle"></i> Crear Nuevo Caso Clínico
           </button>
@@ -315,7 +329,7 @@ export class UIManager {
       </div>
 
       <div id="cases-grid-container" class="cases-grid">
-        ${allCases.map(c => this._buildCaseCardHTML(c, isAdmin)).join("")}
+        ${allCases.map(c => this._buildCaseCardHTML(c, canManageCases)).join("")}
       </div>
     `;
 
@@ -343,8 +357,8 @@ export class UIManager {
         });
 
         if (filtered.length > 0) {
-          gridContainer.innerHTML = filtered.map(c => this._buildCaseCardHTML(c, isAdmin)).join("");
-          this._bindCaseCardEvents(gridContainer, isAdmin);
+          gridContainer.innerHTML = filtered.map(c => this._buildCaseCardHTML(c, canManageCases)).join("");
+          this._bindCaseCardEvents(gridContainer, canManageCases);
         } else {
           gridContainer.innerHTML = `
             <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--text-muted);">
@@ -357,7 +371,7 @@ export class UIManager {
       });
     }
 
-    this._bindCaseCardEvents(container, isAdmin);
+    this._bindCaseCardEvents(container, canManageCases);
   }
 
   _bindCaseCardEvents(container, isAdmin) {
@@ -1069,7 +1083,17 @@ export class UIManager {
                 <tr>
                   <td><strong>${u.fullName}</strong></td>
                   <td>${u.email}</td>
-                  <td><span class="user-role-tag role-${u.role}">${u.role}</span></td>
+                  <td>
+                    ${u.status === 'approved' && u.role !== 'superadmin' ? `
+                      <select class="user-role-select form-control form-control-sm" data-user-id="${u.id}" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; width: auto; display: inline-block;">
+                        <option value="user" ${u.role === 'user' ? 'selected' : ''}>Estudiante</option>
+                        <option value="docente" ${u.role === 'docente' || u.role === 'teacher' ? 'selected' : ''}>Docente</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrador</option>
+                      </select>
+                    ` : `
+                      <span class="user-role-tag role-${u.role}">${u.role}</span>
+                    `}
+                  </td>
                   <td>
                     <span class="user-role-tag ${u.status === 'approved' ? 'role-user' : (u.status === 'pending' ? 'role-admin' : 'role-superadmin')}">
                       ${u.status.toUpperCase()}
@@ -1078,14 +1102,19 @@ export class UIManager {
                   <td style="font-size:0.8rem; font-family: var(--font-mono);">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
                   <td>
                     ${u.status === 'pending' ? `
-                      <button class="btn btn-success btn-sm approve-user-btn" data-user-id="${u.id}">
-                        <i class="fas fa-check"></i> Aprobar
-                      </button>
-                      <button class="btn btn-danger btn-sm reject-user-btn" data-user-id="${u.id}">
-                        <i class="fas fa-times"></i> Rechazar
-                      </button>
+                      <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-success btn-sm approve-user-btn" data-user-id="${u.id}" data-role="user" title="Aprobar como Estudiante">
+                          <i class="fas fa-check"></i> Aprobar
+                        </button>
+                        <button class="btn btn-primary btn-sm approve-user-btn" data-user-id="${u.id}" data-role="docente" title="Aprobar como Docente">
+                          <i class="fas fa-chalkboard-teacher"></i> Docente
+                        </button>
+                        <button class="btn btn-danger btn-sm reject-user-btn" data-user-id="${u.id}">
+                          <i class="fas fa-times"></i> Rechazar
+                        </button>
+                      </div>
                     ` : `
-                      <span style="font-size:0.8rem; color:var(--text-muted);"><i class="fas fa-user-check"></i> Procesado</span>
+                      <span style="font-size:0.8rem; color:var(--text-muted);"><i class="fas fa-user-check"></i> Activo</span>
                     `}
                   </td>
                 </tr>
@@ -1096,12 +1125,28 @@ export class UIManager {
       </div>
     `;
 
+    // Role Dropdown Change Handlers
+    container.querySelectorAll(".user-role-select").forEach(sel => {
+      sel.addEventListener("change", async (e) => {
+        const userId = sel.dataset.userId;
+        const newRole = e.target.value;
+        try {
+          await this.auth.updateUserRole(userId, newRole);
+          this.showToast(`Rol de usuario actualizado a: ${newRole.toUpperCase()}`, "success");
+          await this.renderUsersView();
+        } catch (err) {
+          this.showToast(err.message, "danger");
+        }
+      });
+    });
+
     // Approve / Reject Handlers
     container.querySelectorAll(".approve-user-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const userId = btn.dataset.userId;
-        await this.auth.approveUser(userId);
-        this.showToast("Usuario aprobado exitosamente.", "success");
+        const role = btn.dataset.role || "user";
+        await this.auth.approveUser(userId, role);
+        this.showToast(`Usuario aprobado con rol: ${role.toUpperCase()}.`, "success");
         await this.renderUsersView();
       });
     });

@@ -205,6 +205,37 @@ export class AuthManager {
     return this.currentUser && (this.currentUser.role === "admin" || this.currentUser.role === "superadmin");
   }
 
+  isDocente() {
+    return this.currentUser && (
+      this.currentUser.role === "docente" ||
+      this.currentUser.role === "teacher" ||
+      this.currentUser.role === "admin" ||
+      this.currentUser.role === "superadmin"
+    );
+  }
+
+  canManageCases() {
+    return this.isDocente();
+  }
+
+  canViewReports() {
+    return this.isDocente();
+  }
+
+  canManageUsers() {
+    return this.isAdmin();
+  }
+
+  /**
+   * Update an existing user's role (Only Superadmin or Admin)
+   */
+  async updateUserRole(userId, newRole) {
+    if (!this.isAdmin()) {
+      throw new Error("Acceso denegado. Se requieren permisos de Administrador para modificar roles.");
+    }
+    return await this.db.updateUserStatus(userId, "approved", newRole);
+  }
+
   /**
    * Approve a pending user account
    */
