@@ -60,6 +60,35 @@ class App {
         });
       }
 
+      // 6. Real-Time Auto-Reconnection Listener (when internet returns)
+      window.addEventListener("online", async () => {
+        console.log("Conexión a internet restablecida. Verificando sincronización...");
+        const sbUrl = getStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_URL, CONFIG.SUPABASE_URL);
+        const sbKey = getStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_KEY, CONFIG.SUPABASE_ANON_KEY);
+
+        if (sbUrl && sbKey) {
+          try {
+            if (!this.dbAdapter || !this.dbAdapter.name.includes("Supabase")) {
+              const { SupabaseAdapter } = await import("./adapters/supabaseAdapter.js");
+              this.dbAdapter = new SupabaseAdapter(sbUrl, sbKey);
+              await this.dbAdapter.init();
+              if (this.uiManager) {
+                this.uiManager.db = this.dbAdapter;
+                this.uiManager.updateHeaderUI();
+              }
+            }
+
+            const { SchemaSyncEngine } = await import("./adapters/schemaSync.js");
+            const res = await SchemaSyncEngine.syncOfflineDataWithCloud(this.dbAdapter, this.authManager);
+            if (this.uiManager && res.attemptsSynced > 0) {
+              this.uiManager.showToast(`¡Conexión restablecida! ${res.attemptsSynced} intento(s) sincronizado(s) con la nube.`, "success");
+            }
+          } catch (e) {
+            console.warn("Reconexión en progreso:", e.message);
+          }
+        }
+      });
+
     } catch (err) {
       console.error("Critical error during application startup:", err);
       alert("Error al inicializar SimulaCli: " + err.message);

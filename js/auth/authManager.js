@@ -158,6 +158,19 @@ export class AuthManager {
     this.lastActivityUpdate = Date.now();
     this._resetInactivityTimer();
 
+    // Cache user locally so offline logins work on this device in the future
+    if (this.db.name.includes("Supabase")) {
+      import("../adapters/localDbAdapter.js").then(async ({ LocalDbAdapter }) => {
+        try {
+          const localDb = new LocalDbAdapter();
+          await localDb.init();
+          await localDb._put("users", user);
+        } catch (cacheErr) {
+          console.warn("Caché local de usuario no disponible:", cacheErr);
+        }
+      });
+    }
+
     await this.db.logEvent("USER_LOGIN", `Inicio de sesión exitoso: ${user.email} (${user.role})`, user.email);
 
     return user;
