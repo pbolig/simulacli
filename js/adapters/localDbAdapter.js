@@ -99,16 +99,15 @@ export class LocalDbAdapter extends BaseDbAdapter {
       await this.logEvent("SCHEMA_MIGRATE", "Esquema local verificado y datos semilla cargados exitosamente.");
     }
 
-    // 2. Users Schema Sync / Seed (from repo data/users.json or SEED_USERS fallback)
-    const users = await this.getUsers();
-    if (!users || users.length === 0) {
-      const repoUsers = await this.ghSync.fetchRepoJson("data/users.json");
-      const usersToSeed = (repoUsers && Array.isArray(repoUsers) && repoUsers.length > 0) ? repoUsers : SEED_USERS;
-      console.log("Cargando usuarios semilla / repositorio...");
-      for (const u of usersToSeed) {
+    // 2. Users Schema Sync / Seed: Ensure seed users exist in DB
+    const repoUsers = await this.ghSync.fetchRepoJson("data/users.json");
+    const usersToSeed = (repoUsers && Array.isArray(repoUsers) && repoUsers.length > 0) ? repoUsers : SEED_USERS;
+    for (const u of usersToSeed) {
+      const existing = await this.getUserByEmail(u.email);
+      if (!existing) {
+        console.log(`Sembrando usuario en BD local: ${u.email}`);
         await this._put("users", u);
       }
-      await this.logEvent("SCHEMA_MIGRATE", "Usuarios iniciales cargados exitosamente.");
     }
 
     // 3. Attempts Schema Sync (from repo data/attempts.json if local DB is empty)

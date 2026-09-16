@@ -40,10 +40,11 @@ export class SupabaseAdapter extends BaseDbAdapter {
         }
       }
 
-      const users = await this.getUsers();
-      if (!users || users.length === 0) {
-        console.log("Supabase DB users table empty. Syncing seed users...");
-        for (const u of SEED_USERS) {
+      // Ensure seed users exist in Supabase
+      for (const u of SEED_USERS) {
+        const existing = await this.getUserByEmail(u.email);
+        if (!existing) {
+          console.log(`Sembrando usuario en Supabase: ${u.email}`);
           await this.createUser(u);
         }
       }

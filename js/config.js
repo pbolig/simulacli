@@ -4,9 +4,9 @@
 export const CONFIG = {
   APP_NAME: "SimulaCli",
   VERSION: "1.0.0",
-  // Optional default Supabase credentials (if not set in UI)
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
+  // Default Supabase credentials for production
+  SUPABASE_URL: "https://xjdutgtttquimnkwdsrh.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqZHV0Z3R0dHF1aW1ua3dkc3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDA1NTksImV4cCI6MjEwNTExNjU1OX0.nKEWGlcaccCRRUKSnzXe_aWVWgQR9FYbaFkCTojpagk",
   // Local storage / session storage keys
   STORAGE_KEYS: {
     CURRENT_USER: "simulacli_current_user",

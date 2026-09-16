@@ -10,13 +10,26 @@ export class AuthManager {
   }
 
   async init() {
-    // Restore session from localStorage/sessionStorage if present
+    // Restore and validate session from localStorage against active database
     const savedUser = getStoredConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
     if (savedUser) {
       try {
-        this.currentUser = JSON.parse(savedUser);
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.email) {
+          // Verify user exists and is approved in current active DB
+          const activeUser = await this.db.getUserByEmail(parsed.email);
+          if (activeUser && activeUser.status === "approved") {
+            this.currentUser = activeUser;
+            setStoredConfig(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(activeUser));
+          } else {
+            // User does not exist or is pending in active DB -> clear ghost session
+            this.currentUser = null;
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+          }
+        }
       } catch (e) {
         this.currentUser = null;
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
       }
     }
     return this.currentUser;
