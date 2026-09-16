@@ -216,7 +216,9 @@ export class UIManager {
     // Check if system has 0 users
     this.db.getUsers().then(users => {
       const banner = document.getElementById("first-user-banner");
-      if (banner && users.length === 0) banner.style.display = "flex";
+      if (banner) {
+        banner.style.display = users.length === 0 ? "flex" : "none";
+      }
     });
 
     // Tab Switch Events

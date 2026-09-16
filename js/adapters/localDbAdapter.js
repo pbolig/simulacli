@@ -86,13 +86,41 @@ export class LocalDbAdapter extends BaseDbAdapter {
   }
 
   async checkAndMigrateSchema() {
+    // 1. Cases Schema Migration / Sync
     const cases = await this.getCases();
     if (!cases || cases.length === 0) {
       console.log("Local DB empty. Seeding starter clinical cases...");
-      for (const c of SEED_CASES) {
-        await this.saveCase(c);
+      const repoCases = await this.ghSync.fetchRepoJson("data/cases.json");
+      const casesToSeed = (repoCases && Array.isArray(repoCases) && repoCases.length > 0) ? repoCases : SEED_CASES;
+      for (const c of casesToSeed) {
+        await this.saveCase(c, false);
       }
       await this.logEvent("SCHEMA_MIGRATE", "Esquema local verificado y datos semilla cargados exitosamente.");
+    }
+
+    // 2. Users Schema Sync (from repo data/users.json if local DB is empty)
+    const users = await this.getUsers();
+    if (!users || users.length === 0) {
+      const repoUsers = await this.ghSync.fetchRepoJson("data/users.json");
+      if (repoUsers && Array.isArray(repoUsers) && repoUsers.length > 0) {
+        console.log("Cargando usuarios desde data/users.json...");
+        for (const u of repoUsers) {
+          await this._put("users", u);
+        }
+        await this.logEvent("SCHEMA_MIGRATE", "Usuarios cargados desde el repositorio data/users.json.");
+      }
+    }
+
+    // 3. Attempts Schema Sync (from repo data/attempts.json if local DB is empty)
+    const attempts = await this.getAttempts();
+    if (!attempts || attempts.length === 0) {
+      const repoAttempts = await this.ghSync.fetchRepoJson("data/attempts.json");
+      if (repoAttempts && Array.isArray(repoAttempts) && repoAttempts.length > 0) {
+        console.log("Cargando intentos desde data/attempts.json...");
+        for (const a of repoAttempts) {
+          await this._put("attempts", a);
+        }
+      }
     }
   }
 
@@ -231,6 +259,12 @@ export class LocalDbAdapter extends BaseDbAdapter {
     };
     await this._put("users", newUser);
     await this.logEvent("USER_REGISTER", `Usuario registrado: ${newUser.email} (${newUser.role})`, newUser.email);
+
+    if (this.ghSync.isConfigured()) {
+      const allUsers = await this.getUsers();
+      await this.ghSync.commitJsonFile("data/users.json", allUsers, `feat(users): registrar usuario ${newUser.email}`);
+    }
+
     return newUser;
   }
 
@@ -242,6 +276,12 @@ export class LocalDbAdapter extends BaseDbAdapter {
     if (role) user.role = role;
     await this._put("users", user);
     await this.logEvent("USER_UPDATE", `Estado usuario actualizado: ${user.email} -> ${status} (${user.role})`);
+
+    if (this.ghSync.isConfigured()) {
+      const allUsers = await this.getUsers();
+      await this.ghSync.commitJsonFile("data/users.json", allUsers, `feat(users): actualizar estado usuario ${user.email}`);
+    }
+
     return user;
   }
 
@@ -284,6 +324,12 @@ export class LocalDbAdapter extends BaseDbAdapter {
     attemptData.createdAt = attemptData.createdAt || new Date().toISOString();
     await this._put("attempts", attemptData);
     await this.logEvent("SIMULATION_COMPLETE", `Simulación completada. Caso: ${attemptData.caseTitle}, Puntaje: ${attemptData.totalScore}%`, attemptData.userEmail);
+
+    if (this.ghSync.isConfigured()) {
+      const allAttempts = await this.getAttempts();
+      await this.ghSync.commitJsonFile("data/attempts.json", allAttempts, `feat(attempts): registrar intento ${attemptData.id}`);
+    }
+
     return attemptData;
   }
 
