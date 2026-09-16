@@ -1145,6 +1145,235 @@ textarea.form-control {
     }
   }
 
+  /* ==========================================================================
+     Responsive Media Queries (Mobile & Tablet Optimization)
+     ========================================================================== */
+
+  /* Tablets & Small Laptops (max-width: 1024px) */
+  @media (max-width: 1024px) {
+    #main-content {
+      padding: 1.25rem 1rem;
+    }
+
+    .cases-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .sim-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .clinical-monitor-card {
+      position: static;
+      margin-bottom: 1.25rem;
+    }
+  }
+
+  /* Smartphones & Tablets (max-width: 768px) */
+  @media (max-width: 768px) {
+    /* Header & Navigation */
+    #app-header {
+      padding: 0.65rem 0.85rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
+    }
+
+    .brand-container {
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .header-actions {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
+    }
+
+    .db-status-badge {
+      display: none; /* Hide in compact mobile header to save space */
+    }
+
+    .nav-links {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 0.35rem;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      gap: 0.35rem;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .nav-links::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .nav-btn {
+      white-space: nowrap;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: 99px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .nav-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+    }
+
+    #header-user-info {
+      justify-content: space-between;
+      width: 100%;
+      padding-top: 0.35rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    #theme-toggle-btn {
+      align-self: flex-end;
+    }
+
+    /* Main Container */
+    #main-content {
+      padding: 0.85rem 0.65rem;
+    }
+
+    /* Cases View */
+    .cases-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .google-search-wrapper {
+      max-width: 100%;
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* Forms & Mobile Input font-size to prevent iOS Safari auto-zoom */
+    input.form-control,
+    select.form-control,
+    textarea.form-control {
+      font-size: 16px !important;
+    }
+
+    /* Auth View */
+    .auth-wrapper {
+      margin: 1rem auto;
+      width: 100%;
+      padding: 1.25rem;
+    }
+
+    .auth-card {
+      padding: 1.25rem;
+    }
+
+    /* Simulation Room Mobile Layout */
+    .clinical-monitor-card {
+      padding: 1rem;
+      border-radius: var(--radius-lg);
+    }
+
+    .vitals-monitor-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .vital-large-val {
+      font-size: 1.4rem;
+    }
+
+    .question-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius-lg);
+    }
+
+    .option-btn {
+      padding: 0.85rem 0.95rem;
+      font-size: 0.9rem;
+      min-height: 48px; /* Touch target minimum */
+    }
+
+    /* Reports & Devolución */
+    .report-header {
+      padding: 1.25rem 1rem;
+    }
+
+    .score-gauge-box {
+      width: 110px;
+      height: 110px;
+    }
+
+    .score-number {
+      font-size: 1.85rem;
+    }
+
+    /* Tables & Filter Bar */
+    .reports-filter-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+      padding: 0.85rem;
+    }
+
+    .custom-table th,
+    .custom-table td {
+      padding: 0.65rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    /* Modals */
+    .modal-content {
+      width: 95%;
+      padding: 1.25rem;
+      border-radius: var(--radius-lg);
+    }
+
+    /* Toasts */
+    #toast-container {
+      bottom: 1rem;
+      right: 1rem;
+      left: 1rem;
+    }
+
+    .toast {
+      width: 100%;
+      font-size: 0.82rem;
+      padding: 0.75rem 1rem;
+    }
+  }
+
+  /* Very Small Mobile Screens (max-width: 480px) */
+  @media (max-width: 480px) {
+    .brand-title {
+      font-size: 1.15rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      font-size: 1.1rem;
+    }
+
+    .card {
+      padding: 1rem;
+    }
+
+    .btn {
+      padding: 0.55rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .admin-actions-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   /* Print Styling for Feedback Report */
   @media print {
 
