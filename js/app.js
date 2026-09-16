@@ -51,6 +51,15 @@ class App {
       this.uiManager = new UIManager(this.authManager, this.simEngine, this.dbAdapter);
       this.uiManager.init();
 
+      // 5. Automatic background sync of offline attempts / cases if Supabase is connected
+      if (this.dbAdapter.name.includes("Supabase")) {
+        import("./adapters/schemaSync.js").then(({ SchemaSyncEngine }) => {
+          SchemaSyncEngine.syncOfflineDataWithCloud(this.dbAdapter, this.authManager)
+            .then(res => console.log("Sincronización en segundo plano:", res.message))
+            .catch(err => console.warn("Sincronización en segundo plano omitida:", err.message));
+        });
+      }
+
     } catch (err) {
       console.error("Critical error during application startup:", err);
       alert("Error al inicializar SimulaCli: " + err.message);

@@ -1250,7 +1250,7 @@ export class UIManager {
     });
 
     document.getElementById("sync-now-btn")?.addEventListener("click", async () => {
-      const res = await SchemaSyncEngine.syncSchema(this.db);
+      const res = await SchemaSyncEngine.syncOfflineDataWithCloud(this.db, this.auth);
       const resBox = document.getElementById("sync-result-box");
       if (resBox) {
         resBox.style.display = "block";

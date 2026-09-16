@@ -1,4 +1,5 @@
 import { SEED_CASES } from "../../data/seedCases.js";
+import { LocalDbAdapter } from "./localDbAdapter.js";
 
 /**
  * Schema Inspector & Auto-Migration Generator
@@ -94,21 +95,75 @@ ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, symptoms = EXCLUDED.sympt
   }
 
   /**
-   * Transparent sync check that can be executed directly from the UI or script.
+   * Legacy sync check
    */
   static async syncSchema(dbAdapter) {
+    return await this.syncOfflineDataWithCloud(dbAdapter, null);
+  }
+
+  /**
+   * Secure Bidirectional synchronization between Local storage and Supabase Cloud
+   */
+  static async syncOfflineDataWithCloud(activeDb, authManager = null) {
     const result = {
-      tablesCreated: [],
-      seedCasesSynced: 0,
+      casesSynced: 0,
+      attemptsSynced: 0,
       status: "success",
       message: ""
     };
 
     try {
-      await dbAdapter.checkAndMigrateSchema();
-      const cases = await dbAdapter.getCases();
-      result.seedCasesSynced = cases ? cases.length : 0;
-      result.message = `Sincronización completada exitosamente. (${result.seedCasesSynced} casos clínicos cargados).`;
+      // If currently operating in purely Local Mode
+      if (!activeDb.name.includes("Supabase")) {
+        await activeDb.checkAndMigrateSchema();
+        const cases = await activeDb.getCases();
+        result.casesSynced = cases.length;
+        result.message = `Base de datos local verificada (${cases.length} casos clínicos listos).`;
+        return result;
+      }
+
+      // Supabase is active: inspect local DB for offline work to push
+      const localDb = new LocalDbAdapter();
+      await localDb.init();
+
+      const localAttempts = await localDb.getAttempts();
+      const localCases = await localDb.getCases();
+
+      const cloudCases = await activeDb.getCases();
+      const cloudAttempts = await activeDb.getAttempts();
+
+      const cloudCaseIds = new Set(cloudCases.map(c => c.id));
+      const cloudAttemptIds = new Set(cloudAttempts.map(a => a.id));
+
+      // 1. Sync offline student simulation attempts to Supabase Cloud
+      let attemptsUploaded = 0;
+      for (const att of localAttempts) {
+        if (!cloudAttemptIds.has(att.id)) {
+          await activeDb.saveAttempt(att);
+          attemptsUploaded++;
+        }
+      }
+      result.attemptsSynced = attemptsUploaded;
+
+      // 2. Sync offline cases to Supabase Cloud (Only if Superadmin / Admin)
+      let casesUploaded = 0;
+      const isAdmin = authManager && authManager.isAdmin();
+      if (isAdmin) {
+        for (const c of localCases) {
+          if (!cloudCaseIds.has(c.id)) {
+            await activeDb.saveCase(c);
+            casesUploaded++;
+          }
+        }
+      }
+
+      // 3. Download cloud cases to local storage (for future offline use)
+      for (const c of cloudCases) {
+        await localDb.saveCase(c, false);
+      }
+      result.casesSynced = cloudCases.length;
+
+      result.message = `¡Sincronización exitosa! ${attemptsUploaded} intentos offline subidos y ${cloudCases.length} casos sincronizados con la nube.`;
     } catch (err) {
       result.status = "error";
       result.message = `Error en sincronización: ${err.message}`;
