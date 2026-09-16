@@ -841,10 +841,10 @@ export class UIManager {
     });
   }
 
-  // --- Superadmin / Admin Analytics & Simulation Reports View ---
+  // --- Superadmin / Admin / Docente Analytics & Simulation Reports View ---
   async renderReportsView() {
     const container = document.getElementById("reports-view");
-    if (!container || !this.auth.isAdmin()) return;
+    if (!container || !this.auth.canViewReports()) return;
 
     const attempts = await this.db.getAttempts();
     const users = await this.db.getUsers();
