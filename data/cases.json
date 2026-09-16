@@ -84,7 +84,7 @@
         "correctAnswer": "Angioplastia coronaria primaria (ICP) en menos de 90-120 minutos desde el primer contacto médico, o fibrinolisis en menos de 30 minutos si ICP no está disponible.",
         "points": 25,
         "keywords": ["angioplastia", "icp", "reperfusión", "fibrinolisis", "tiempo", "120", "90", "stent"],
-        feedback: "El tiempo es miocardio. La angioplastia primaria dentro de los 90-120 min es la estrategia óptima para restaurar el flujo coronario en IAM con supradesnivel del ST."
+        "feedback": "El tiempo es miocardio. La angioplastia primaria dentro de los 90-120 min es la estrategia óptima para restaurar el flujo coronario en IAM con supradesnivel del ST."
       }
     ]
   },
@@ -204,7 +204,7 @@
           "Administrar insulina junto con un bolo masivo de cloruro de potasio en todos los casos",
           "Indicar diuréticos de asa para forzar la excreción de potasio"
         ],
-        correctAnswer: "Verificar K+ > 3.3 mEq/L; si es menor a 3.3 mEq/L, se debe reponer potasio primero y diferir la insulina",
+        "correctAnswer": "Verificar K+ > 3.3 mEq/L; si es menor a 3.3 mEq/L, se debe reponer potasio primero y diferir la insulina",
         "points": 33,
         "feedback": "Correcto. La insulina desplaza el potasio al espacio intracelular. Iniciar insulina con K < 3.3 mEq/L puede desencadenar arritmias cardíacas letales o paro cardíaco."
       },
