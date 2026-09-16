@@ -1,5 +1,6 @@
 import { BaseDbAdapter } from "./dbAdapter.js";
 import { SEED_CASES } from "../../data/seedCases.js";
+import { SEED_USERS } from "../../data/seedUsers.js";
 
 /**
  * Remote Supabase DB Adapter
@@ -36,6 +37,14 @@ export class SupabaseAdapter extends BaseDbAdapter {
         console.log("Supabase DB tables empty or initialized. Syncing seed cases...");
         for (const c of SEED_CASES) {
           await this.saveCase(c);
+        }
+      }
+
+      const users = await this.getUsers();
+      if (!users || users.length === 0) {
+        console.log("Supabase DB users table empty. Syncing seed users...");
+        for (const u of SEED_USERS) {
+          await this.createUser(u);
         }
       }
     } catch (err) {

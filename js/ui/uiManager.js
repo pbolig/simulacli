@@ -1,4 +1,5 @@
 import { SchemaSyncEngine } from "../adapters/schemaSync.js";
+import { CONFIG, getStoredConfig, setStoredConfig } from "../config.js";
 
 /**
  * UI Manager - Handles DOM Rendering, View Routing, Modals & Visual Components
@@ -1114,20 +1115,63 @@ export class UIManager {
     if (!container) return;
 
     const ddl = SchemaSyncEngine.getSupabaseDDL();
+    const currentSbUrl = getStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_URL, "");
+    const currentSbKey = getStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_KEY, "");
+    const isSupabaseActive = this.db.name.includes("Supabase");
 
     container.innerHTML = `
-      <div class="card" style="margin-bottom: 1.5rem;">
+      <!-- Supabase Cloud Connection Panel -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 1px solid var(--primary-color);">
         <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-database"></i> Adaptador SQLite (WASM) y Sincronizador Supabase</h3>
+          <h3 class="card-title">
+            <i class="fas fa-cloud"></i> Conexión con Supabase Cloud
+          </h3>
+          <span class="user-role-tag ${isSupabaseActive ? 'role-user' : 'role-admin'}">
+            ${isSupabaseActive ? 'CONECTADO A SUPABASE' : 'MODO LOCAL ACTIVO'}
+          </span>
         </div>
 
         <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-          Motor activo: <strong>${this.db.name}</strong>. Ejecuta sentencias SQL reales en el navegador y permite exportar/cargar archivos <code>.sqlite</code> binarios.
+          Conecta SimulaCli a tu proyecto en la nube de Supabase para centralizar usuarios, casos clínicos e intentos en tiempo real.
+        </p>
+
+        <form id="supabase-config-form" style="display: grid; gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label"><strong>Project URL</strong> (Ej: https://xxxxxxxxxxxx.supabase.co)</label>
+            <input type="text" id="sb-input-url" class="form-control" placeholder="https://tu-proyecto.supabase.co" value="${currentSbUrl}">
+          </div>
+          <div class="form-group">
+            <label class="form-label"><strong>Anon Public API Key</strong> (Clave pública de Supabase)</label>
+            <input type="password" id="sb-input-key" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="${currentSbKey}">
+          </div>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-plug"></i> Guardar y Conectar Supabase
+            </button>
+            ${isSupabaseActive || currentSbUrl ? `
+              <button type="button" id="disconnect-supabase-btn" class="btn btn-danger">
+                <i class="fas fa-power-off"></i> Desconectar (Volver a Modo Local)
+              </button>
+            ` : ''}
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-database"></i> Motor de Datos y Esquema SQL</h3>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Motor activo: <strong>${this.db.name}</strong>.
         </p>
 
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
           <button id="sync-now-btn" class="btn btn-primary">
-            <i class="fas fa-sync-alt"></i> Sincronizar con Supabase
+            <i class="fas fa-sync-alt"></i> Sincronizar Datos Semilla
+          </button>
+          <button id="copy-sql-btn" class="btn btn-secondary">
+            <i class="fas fa-copy"></i> Copiar Script SQL para Supabase
           </button>
           <button id="export-json-btn" class="btn btn-secondary">
             <i class="fas fa-file-code"></i> Descargar simulacli.json
@@ -1136,17 +1180,49 @@ export class UIManager {
             <i class="fas fa-file-upload"></i> Cargar archivo .json
             <input type="file" id="import-json-file" accept=".json" style="display: none;">
           </label>
-          <button id="reload-seed-btn" class="btn btn-secondary">
-            <i class="fas fa-seedling"></i> Recargar Casos Semilla
-          </button>
         </div>
 
         <div id="sync-result-box" style="display: none; margin-bottom: 1.5rem;"></div>
 
-        <h4><i class="fas fa-code"></i> Esquema SQL DDL Autogenerado</h4>
-        <pre class="form-control" style="font-family: var(--font-mono); font-size: 0.8rem; background: #040914; height: 250px; overflow-y: auto; margin-top: 0.5rem;">${ddl}</pre>
+        <h4><i class="fas fa-code"></i> Script SQL DDL para Supabase SQL Editor</h4>
+        <pre id="sql-ddl-code" class="form-control" style="font-family: var(--font-mono); font-size: 0.8rem; background: #040914; height: 250px; overflow-y: auto; margin-top: 0.5rem;">${ddl}</pre>
       </div>
     `;
+
+    // Supabase Config Form Handler
+    document.getElementById("supabase-config-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = document.getElementById("sb-input-url").value.trim();
+      const key = document.getElementById("sb-input-key").value.trim();
+
+      if (!url || !key) {
+        this.showToast("Por favor ingresa tanto la URL como la Anon Key de Supabase.", "warning");
+        return;
+      }
+
+      setStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_URL, url);
+      setStoredConfig(CONFIG.STORAGE_KEYS.SUPABASE_KEY, key);
+      this.showToast("Credenciales de Supabase guardadas. Recargando...", "success");
+      setTimeout(() => window.location.reload(), 1000);
+    });
+
+    // Disconnect Supabase Handler
+    document.getElementById("disconnect-supabase-btn")?.addEventListener("click", () => {
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.SUPABASE_URL);
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.SUPABASE_KEY);
+      this.showToast("Desconectado de Supabase. Recargando en modo local...", "info");
+      setTimeout(() => window.location.reload(), 1000);
+    });
+
+    // Copy SQL DDL to Clipboard
+    document.getElementById("copy-sql-btn")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(ddl);
+        this.showToast("¡Script SQL copiado al portapapeles!", "success");
+      } catch (e) {
+        this.showToast("Selecciona y copia el texto del cuadro SQL manualmente.", "info");
+      }
+    });
 
     // Export .json file handler
     document.getElementById("export-json-btn")?.addEventListener("click", async () => {
@@ -1182,11 +1258,6 @@ export class UIManager {
         resBox.innerHTML = `<i class="fas fa-info-circle"></i> <div>${res.message}</div>`;
       }
       this.showToast(res.message, res.status === "success" ? "success" : "danger");
-    });
-
-    document.getElementById("reload-seed-btn")?.addEventListener("click", async () => {
-      await this.db.checkAndMigrateSchema();
-      this.showToast("Casos Semilla recargados.", "success");
     });
   }
 

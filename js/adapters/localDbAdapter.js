@@ -1,5 +1,6 @@
 import { BaseDbAdapter } from "./dbAdapter.js";
 import { SEED_CASES } from "../../data/seedCases.js";
+import { SEED_USERS } from "../../data/seedUsers.js";
 import { GitHubSyncEngine } from "./githubSync.js";
 
 /**
@@ -72,7 +73,7 @@ export class LocalDbAdapter extends BaseDbAdapter {
   _initLocalStorageFallback() {
     this.useLocalStorage = true;
     if (!localStorage.getItem(this.storagePrefix + "users")) {
-      localStorage.setItem(this.storagePrefix + "users", JSON.stringify([]));
+      localStorage.setItem(this.storagePrefix + "users", JSON.stringify(SEED_USERS));
     }
     if (!localStorage.getItem(this.storagePrefix + "cases")) {
       localStorage.setItem(this.storagePrefix + "cases", JSON.stringify(SEED_CASES));
@@ -98,17 +99,16 @@ export class LocalDbAdapter extends BaseDbAdapter {
       await this.logEvent("SCHEMA_MIGRATE", "Esquema local verificado y datos semilla cargados exitosamente.");
     }
 
-    // 2. Users Schema Sync (from repo data/users.json if local DB is empty)
+    // 2. Users Schema Sync / Seed (from repo data/users.json or SEED_USERS fallback)
     const users = await this.getUsers();
     if (!users || users.length === 0) {
       const repoUsers = await this.ghSync.fetchRepoJson("data/users.json");
-      if (repoUsers && Array.isArray(repoUsers) && repoUsers.length > 0) {
-        console.log("Cargando usuarios desde data/users.json...");
-        for (const u of repoUsers) {
-          await this._put("users", u);
-        }
-        await this.logEvent("SCHEMA_MIGRATE", "Usuarios cargados desde el repositorio data/users.json.");
+      const usersToSeed = (repoUsers && Array.isArray(repoUsers) && repoUsers.length > 0) ? repoUsers : SEED_USERS;
+      console.log("Cargando usuarios semilla / repositorio...");
+      for (const u of usersToSeed) {
+        await this._put("users", u);
       }
+      await this.logEvent("SCHEMA_MIGRATE", "Usuarios iniciales cargados exitosamente.");
     }
 
     // 3. Attempts Schema Sync (from repo data/attempts.json if local DB is empty)

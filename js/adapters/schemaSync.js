@@ -72,6 +72,11 @@ ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cases DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attempts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs DISABLE ROW LEVEL SECURITY;
+
+-- 5. Insert Default Superadmin User
+INSERT INTO public.users (id, email, "fullName", password, role, status)
+VALUES ('user-admin-seed', 'admin@iset57.com.ar', 'Superadmin ISET 57', 'iset57**', 'superadmin', 'approved')
+ON CONFLICT (id) DO NOTHING;
 `;
   }
 
