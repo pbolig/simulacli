@@ -480,15 +480,22 @@ textarea.form-control {
 /* Clinical Triage & Cases Grid */
 .cases-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-top: 1.25rem;
+}
+
+.case-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .case-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
@@ -502,6 +509,10 @@ textarea.form-control {
   background: rgba(6, 182, 212, 0.1);
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .case-badge {
@@ -515,6 +526,10 @@ textarea.form-control {
   color: var(--secondary);
   border: 1px solid rgba(16, 185, 129, 0.3);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: auto;
 }
 
 .patient-header {
