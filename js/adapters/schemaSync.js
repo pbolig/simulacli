@@ -68,16 +68,26 @@ CREATE TABLE IF NOT EXISTS public.logs (
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Disable Row Level Security (RLS) or add public access policies for API access
+-- Disable Row Level Security (RLS) and add permissive public policies
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cases DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attempts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs DISABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public users access" ON public.users;
+DROP POLICY IF EXISTS "Public cases access" ON public.cases;
+DROP POLICY IF EXISTS "Public attempts access" ON public.attempts;
+DROP POLICY IF EXISTS "Public logs access" ON public.logs;
+
+CREATE POLICY "Public users access" ON public.users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public cases access" ON public.cases FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public attempts access" ON public.attempts FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public logs access" ON public.logs FOR ALL USING (true) WITH CHECK (true);
+
 -- 5. Insert Default Superadmin User
 INSERT INTO public.users (id, email, "fullName", password, role, status)
 VALUES ('user-admin-seed', 'admin@iset57.com.ar', 'Superadmin ISET 57', 'iset57**', 'superadmin', 'approved')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role, status = EXCLUDED.status;
 `;
   }
 

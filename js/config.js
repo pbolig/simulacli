@@ -7,6 +7,8 @@ export const CONFIG = {
   // Default Supabase credentials for production
   SUPABASE_URL: "https://xjdutgtttquimnkwdsrh.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqZHV0Z3R0dHF1aW1ua3dkc3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDA1NTksImV4cCI6MjEwNTExNjU1OX0.nKEWGlcaccCRRUKSnzXe_aWVWgQR9FYbaFkCTojpagk",
+  // Inactivity timeout limit: 60 minutes (in milliseconds)
+  INACTIVITY_TIMEOUT_MS: 60 * 60 * 1000,
   // Local storage / session storage keys
   STORAGE_KEYS: {
     CURRENT_USER: "simulacli_current_user",
@@ -15,14 +17,28 @@ export const CONFIG = {
     GH_REPO: "simulacli_gh_repo",
     GH_TOKEN: "simulacli_gh_token",
     SUPABASE_URL: "simulacli_sb_url",
-    SUPABASE_KEY: "simulacli_sb_key"
+    SUPABASE_KEY: "simulacli_sb_key",
+    LAST_ACTIVITY: "simulacli_last_activity"
   }
 };
 
 export function getStoredConfig(key, fallback = "") {
-  return localStorage.getItem(key) || fallback;
+  return sessionStorage.getItem(key) || localStorage.getItem(key) || fallback;
 }
 
 export function setStoredConfig(key, value) {
   localStorage.setItem(key, value);
+}
+
+export function getSessionConfig(key, fallback = "") {
+  return sessionStorage.getItem(key) || fallback;
+}
+
+export function setSessionConfig(key, value) {
+  sessionStorage.setItem(key, value);
+}
+
+export function removeSessionConfig(key) {
+  sessionStorage.removeItem(key);
+  localStorage.removeItem(key);
 }

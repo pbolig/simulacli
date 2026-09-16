@@ -1,17 +1,31 @@
-import { CONFIG, getStoredConfig, setStoredConfig } from "../config.js";
+import { CONFIG, getSessionConfig, setSessionConfig, removeSessionConfig } from "../config.js";
 
 /**
  * Authentication & Authorization Manager
+ * Supports tab-scoped sessions (cleared on tab close) and automatic logout after 60 minutes of inactivity.
  */
 export class AuthManager {
   constructor(dbAdapter) {
     this.db = dbAdapter;
     this.currentUser = null;
+    this.inactivityTimer = null;
+    this.lastActivityUpdate = Date.now();
+    this.onTimeoutCallback = null;
   }
 
   async init() {
-    // Restore and validate session from localStorage against active database
-    const savedUser = getStoredConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
+    // 1. Check if session has exceeded 60 minutes of inactivity
+    const lastActivity = parseInt(getSessionConfig(CONFIG.STORAGE_KEYS.LAST_ACTIVITY, "0"), 10);
+    const now = Date.now();
+
+    if (lastActivity > 0 && (now - lastActivity > CONFIG.INACTIVITY_TIMEOUT_MS)) {
+      console.log("Sesión previa expirada por inactividad (> 60 min).");
+      this.logout();
+      return null;
+    }
+
+    // 2. Restore and validate session from sessionStorage against active database
+    const savedUser = getSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
@@ -20,19 +34,61 @@ export class AuthManager {
           const activeUser = await this.db.getUserByEmail(parsed.email);
           if (activeUser && activeUser.status === "approved") {
             this.currentUser = activeUser;
-            setStoredConfig(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(activeUser));
+            setSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(activeUser));
+            setSessionConfig(CONFIG.STORAGE_KEYS.LAST_ACTIVITY, Date.now().toString());
           } else {
             // User does not exist or is pending in active DB -> clear ghost session
             this.currentUser = null;
-            localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+            removeSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
           }
         }
       } catch (e) {
         this.currentUser = null;
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+        removeSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
       }
     }
     return this.currentUser;
+  }
+
+  /**
+   * Start 60-Minute Inactivity Monitor
+   */
+  startInactivityMonitor(onTimeoutCallback) {
+    this.onTimeoutCallback = onTimeoutCallback;
+    this._resetInactivityTimer();
+
+    // Listen to user interactions to refresh the 60-minute inactivity timer
+    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    const handleActivity = () => {
+      const now = Date.now();
+      // Throttle activity updates to once every 30 seconds
+      if (now - this.lastActivityUpdate > 30000) {
+        this.lastActivityUpdate = now;
+        if (this.isLoggedIn()) {
+          setSessionConfig(CONFIG.STORAGE_KEYS.LAST_ACTIVITY, now.toString());
+        }
+        this._resetInactivityTimer();
+      }
+    };
+
+    activityEvents.forEach(evt => {
+      window.addEventListener(evt, handleActivity, { passive: true });
+    });
+  }
+
+  _resetInactivityTimer() {
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+
+    if (this.isLoggedIn()) {
+      this.inactivityTimer = setTimeout(() => {
+        console.warn("Tiempo de inactividad de 60 minutos alcanzado. Cerrando sesión...");
+        this.logout().then(() => {
+          if (typeof this.onTimeoutCallback === "function") {
+            this.onTimeoutCallback();
+          }
+        });
+      }, CONFIG.INACTIVITY_TIMEOUT_MS);
+    }
   }
 
   /**
@@ -96,7 +152,12 @@ export class AuthManager {
     }
 
     this.currentUser = user;
-    setStoredConfig(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    const nowStr = Date.now().toString();
+    setSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    setSessionConfig(CONFIG.STORAGE_KEYS.LAST_ACTIVITY, nowStr);
+    this.lastActivityUpdate = Date.now();
+    this._resetInactivityTimer();
+
     await this.db.logEvent("USER_LOGIN", `Inicio de sesión exitoso: ${user.email} (${user.role})`, user.email);
 
     return user;
@@ -106,11 +167,13 @@ export class AuthManager {
    * Terminate active user session
    */
   async logout() {
+    if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
     if (this.currentUser) {
       await this.db.logEvent("USER_LOGOUT", `Cierre de sesión: ${this.currentUser.email}`, this.currentUser.email);
     }
     this.currentUser = null;
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.CURRENT_USER);
+    removeSessionConfig(CONFIG.STORAGE_KEYS.CURRENT_USER);
+    removeSessionConfig(CONFIG.STORAGE_KEYS.LAST_ACTIVITY);
   }
 
   getCurrentUser() {

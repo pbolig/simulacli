@@ -17,6 +17,13 @@ export class UIManager {
     this._bindEvents();
     this.updateHeaderUI();
     this.routeTo(this.auth.isLoggedIn() ? "cases-view" : "auth-view");
+
+    // Initialize 60-Minute Inactivity Auto-Logout Monitor
+    this.auth.startInactivityMonitor(() => {
+      this.updateHeaderUI();
+      this.routeTo("auth-view");
+      this.showToast("Tu sesión ha expirado por inactividad (60 minutos). Por favor, ingresa nuevamente.", "warning");
+    });
   }
 
   _bindEvents() {
