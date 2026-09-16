@@ -417,30 +417,30 @@ export class UIManager {
     return `
       <div class="card case-card">
         <div class="case-card-top">
-          <span class="case-category-tag"><i class="fas fa-folder-open" style="font-size:0.65rem;"></i> ${c.category || 'General'}</span>
-          <span class="case-badge"><i class="fas fa-layer-group" style="font-size:0.65rem;"></i> ${c.difficulty || 'Intermedio'}</span>
+          <span class="case-category-tag" title="${c.category || 'General'}"><i class="fas fa-folder-open" style="font-size:0.65rem;"></i> ${c.category || 'General'}</span>
+          <span class="case-badge" title="${c.difficulty || 'Intermedio'}"><i class="fas fa-layer-group" style="font-size:0.65rem;"></i> ${c.difficulty || 'Intermedio'}</span>
         </div>
 
         <div class="patient-header">
           <div class="patient-avatar-box">
             ${avatarSrc}
           </div>
-          <div style="flex-grow: 1;">
-            <h3 style="font-size: 1.1rem; line-height: 1.3; margin-bottom: 0.25rem;">${c.title}</h3>
+          <div style="flex-grow: 1; min-width: 0;">
+            <h3 class="case-card-title">${c.title}</h3>
             <div style="font-size: 0.8rem; color: var(--text-muted);">
               ${c.patientName}, ${c.patientAge} años (${c.patientGender})
             </div>
           </div>
         </div>
 
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; flex-grow: 1;">
+        <p class="case-card-complaint">
           <strong>Motivo:</strong> ${c.chiefComplaint}
         </p>
 
         <div class="vitals-preview-bar">
           <div class="vital-item">
             <div class="vital-label">FC</div>
-            <div class="vital-val">${vitals.heartRate || '--'} <span style="font-size:0.6rem;">bpm</span></div>
+            <div class="vital-val">${vitals.heartRate || '--'}<span class="vital-unit">bpm</span></div>
           </div>
           <div class="vital-item">
             <div class="vital-label">PA</div>
@@ -456,26 +456,28 @@ export class UIManager {
           </div>
         </div>
 
-        <button class="btn btn-primary start-sim-btn" data-case-id="${c.id}" style="width: 100%; margin-top: 0.5rem; margin-bottom: 0.5rem;">
-          <i class="fas fa-play-circle"></i> Iniciar Simulación
-        </button>
+        <div class="case-card-actions">
+          <button class="btn btn-primary start-sim-btn" data-case-id="${c.id}" style="width: 100%;">
+            <i class="fas fa-play-circle"></i> Iniciar Simulación
+          </button>
 
-        ${isAdmin ? `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
-            <button class="btn btn-secondary btn-sm edit-case-btn" data-case-id="${c.id}" title="Editar Caso">
-              <i class="fas fa-edit"></i> Editar
-            </button>
-            <button class="btn btn-secondary btn-sm duplicate-case-btn" data-case-id="${c.id}" title="Duplicar Caso">
-              <i class="fas fa-copy"></i> Duplicar
-            </button>
-            <button class="btn btn-secondary btn-sm view-rubric-btn" data-case-id="${c.id}" style="grid-column: span 2;" title="Ver Clave de Respuestas">
-              <i class="fas fa-key"></i> Clave de Respuestas Correctas
-            </button>
-            <button class="btn btn-danger btn-sm delete-case-btn" data-case-id="${c.id}" style="grid-column: span 2;" title="Eliminar Caso">
-              <i class="fas fa-trash-alt"></i> Eliminar Caso
-            </button>
-          </div>
-        ` : ''}
+          ${isAdmin ? `
+            <div class="admin-actions-grid">
+              <button class="btn btn-secondary btn-sm edit-case-btn" data-case-id="${c.id}" title="Editar Caso">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+              <button class="btn btn-secondary btn-sm duplicate-case-btn" data-case-id="${c.id}" title="Duplicar Caso">
+                <i class="fas fa-copy"></i> Duplicar
+              </button>
+              <button class="btn btn-secondary btn-sm view-rubric-btn" data-case-id="${c.id}" style="grid-column: span 2;" title="Ver Clave de Respuestas">
+                <i class="fas fa-key"></i> Clave de Respuestas Correctas
+              </button>
+              <button class="btn btn-danger btn-sm delete-case-btn" data-case-id="${c.id}" style="grid-column: span 2;" title="Eliminar Caso">
+                <i class="fas fa-trash-alt"></i> Eliminar Caso
+              </button>
+            </div>
+          ` : ''}
+        </div>
       </div>
     `;
   }
