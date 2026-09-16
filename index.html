@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimulaCli - Herramienta de Simulación Clínica</title>
+  <meta name="description" content="Plataforma interactiva de simulación clínica con casos de uso, triaje de pacientes, rúbrica de evaluación y adaptador de base de datos SQLite / Supabase.">
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Application Navigation Header -->
+  <header id="app-header">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <i class="fas fa-heart-pulse"></i>
+      </div>
+      <div>
+        <div class="brand-title">
+          SimulaCli <span class="brand-tag">v1.0</span>
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">
+          Simulación Clínica Hospitalaria
+        </div>
+      </div>
+    </div>
+
+    <!-- DB Status & Header Controls -->
+    <div class="header-actions">
+      <div class="db-status-badge" title="Base de datos basada en archivos JSON del repositorio Git">
+        <div id="db-status-dot" class="status-dot supabase"></div>
+        <span id="db-status-text">GitHub JSON Repo</span>
+      </div>
+
+      <!-- Main Navigation Menu -->
+      <nav id="main-nav-links" class="nav-links" style="display: none;">
+        <button class="nav-btn active" data-view="cases-view">
+          <i class="fas fa-stethoscope"></i> Casos Clínicos
+        </button>
+        <button class="nav-btn admin-only" data-view="users-view">
+          <i class="fas fa-users-cog"></i> Usuarios
+        </button>
+        <button class="nav-btn admin-only" data-view="reports-view">
+          <i class="fas fa-chart-line"></i> Reportes
+        </button>
+        <button class="nav-btn admin-only" data-view="db-view">
+          <i class="fas fa-database"></i> Adaptador BD
+        </button>
+        <button class="nav-btn admin-only" data-view="logs-view">
+          <i class="fas fa-history"></i> Auditoría
+        </button>
+      </nav>
+
+      <!-- User Info & Theme Selector -->
+      <div id="header-user-info" style="display: none; align-items: center; gap: 0.75rem;"></div>
+
+      <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Cambiar Tema Dark/Light">
+        <i class="fas fa-sun"></i> Light
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="main-content">
+    <!-- 1. Authentication View (Login / Auto-Register / Superadmin Banner) -->
+    <section id="auth-view" class="view-section active"></section>
+
+    <!-- 2. Clinical Cases Gallery View -->
+    <section id="cases-view" class="view-section"></section>
+
+    <!-- 3. Interactive Patient Simulation Room View -->
+    <section id="simulation-view" class="view-section"></section>
+
+    <!-- 4. Clinical Devolución & Feedback Report View -->
+    <section id="feedback-view" class="view-section"></section>
+
+    <!-- 5. User Management & Authorization Panel -->
+    <section id="users-view" class="view-section"></section>
+
+    <!-- 6. Simulation Reports & Analytics View -->
+    <section id="reports-view" class="view-section"></section>
+
+    <!-- 7. Database Adapter & Migration View -->
+    <section id="db-view" class="view-section"></section>
+
+    <!-- 7. End-to-End Audit Logs View -->
+    <section id="logs-view" class="view-section"></section>
+  </main>
+
+  <!-- Modal Overlays -->
+  <div id="case-editor-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close-btn">&times;</button>
+      <div id="modal-case-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Main ES Module Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

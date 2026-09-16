@@ -1,0 +1,16 @@
+{
+  "name": "simulacli",
+  "version": "1.0.0",
+  "description": "Herramienta de Simulación Clínica con Adaptador BD Local SQLite y Supabase Cloud",
+  "main": "js/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "sync-supabase": "node scripts/sync-supabase.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
